@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+    <title>Zoomable</title>
+    <script defer src="./zoomable.js"></script>
+</head>
+
+<body>
+    <div class="zoomable-basic-image-container">
+        <img src="google.png" alt="example" class="zoomable-basic-image" data-zoom-trigger />
+    </div>
+    <div class="zoomable-popup-overlay" data-zoom-overlay data-zoom-close>
+        <div class="zoomable-popup-container">
+            <div class="zoomable-popup-content">
+                <img src="google.png" alt="Zoomed image" class="zoomable-popup-image" data-zoom-image />
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

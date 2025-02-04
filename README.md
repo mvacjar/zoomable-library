@@ -21,12 +21,12 @@ npm install test-library
 
 ```html
 <div class="zoomable-basic-image-container">
-  <img src="example.jpg" alt="example" class="zoomable-basic-image" data-zoomable="true" data-zoom-limit="3" />
+  <img src="" alt="example" class="zoomable-basic-image" data-zoom-trigger />
 </div>
-<div class="zoomable-popup-overlay">
+<div class="zoomable-popup-overlay" data-zoom-overlay data-zoom-close>
   <div class="zoomable-popup-container">
     <div class="zoomable-popup-content">
-      <img src="" alt="Zoomed image" class="zoomable-popup-image" />
+      <img src="" alt="Zoomed image" class="zoomable-popup-image" data-zoom-image />
     </div>
   </div>
 </div>
@@ -141,8 +141,6 @@ Here are the default styles applied by the library. These can be customized in y
   max-width: none;
   max-height: none;
   border-radius: 10px;
-  transform-origin: center;
-  transition: transform 0.1s ease-in-out;
 }
 ```
 
@@ -159,27 +157,6 @@ You can overwrite the default styles by adding your own CSS rules. For example:
   border-radius: 0;
 }
 ```
-
-### 5.4. Events
-
-The library provides hooks for key actions. You can attach event listeners like this:
-
-```javascript
-zoomable.on('open', (image) => {
-  console.log('Popup opened for:', image.src);
-});
-
-zoomable.on('close', () => {
-  console.log('Popup closed');
-});
-```
-
-#### Available Events
-
-| Event   | Description                     | Arguments                                            |
-| ------- | ------------------------------- | ---------------------------------------------------- |
-| `open`  | Fired when the popup is opened. | `image`: The image element that triggered the popup. |
-| `close` | Fired when the popup is closed. | None                                                 |
 
 ## 6. Contributing
 
