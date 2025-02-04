@@ -37,20 +37,6 @@ npm install test-library
 - `data-zoomable`: Indicates that the image should trigger the zoom popup when clicked.
 - `data-zoom-limit`: Sets the maximum zoom level (default: 3).
 
-### 2.2 Initialize the library in your JavaScript file:
-
-```javascript
-import ZoomablePopup from 'zoomable-popup';
-
-const zoomable = new ZoomablePopup({
-  overlaySelector: '.zoomable-popup-overlay',
-  popupImageSelector: '.zoomable-popup-image',
-  triggerSelector: '[data-zoomable]',
-});
-
-zoomable.init();
-```
-
 ## 3. Customization Options for HTML
 
 - `data-zoom-trigger`: Element that opens the popup.
