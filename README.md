@@ -193,4 +193,4 @@ Contributions are welcome! If you find any bugs or want to suggest improvements,
 
 ## 7. Credits
 
-Developed by Maryuxy.
+Developed by mvacjar.
