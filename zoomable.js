@@ -18,7 +18,7 @@ class Zoomable {
             border-radius: 10px;
         }
 
-        /* Pop Up */
+        /* Modal */
         .zoomable-popup-overlay {
             position: fixed;
             top: 0;

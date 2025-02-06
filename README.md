@@ -11,13 +11,26 @@ npm install test-library
 ### 1.2. Include the library in your project:
 
 ```html
-<script src="/path/to/zoomable-popup.js"></script>
-<link rel="stylesheet" href="/path/to/zoomable-popup.css" />
+<script defer src="/path/to/zoomable.js"></script>
+```
+
+Make sure you have the necessary HTML structure (see Usage section).
+
+#### Initialization
+
+The library initializes automatically when the page content is fully loaded:
+
+```js
+document.addEventListener('DOMContentLoaded', () => {
+  new Zoomable();
+});
 ```
 
 ## 2. Usage
 
-### 2.1. Add the required HTML structure to your project.
+### 2.1. HTML Structure
+
+Add the following elements to your HTML:
 
 ```html
 <div class="zoomable-basic-image-container">
@@ -34,30 +47,60 @@ npm install test-library
 
 #### Required attributes:
 
-- `data-zoomable`: Indicates that the image should trigger the zoom popup when clicked.
-- `data-zoom-limit`: Sets the maximum zoom level (default: 3).
+Customize the zoom behavior using data-\* attributes on your image:
 
-## 3. Customization Options for HTML
+- `data-zoom-trigger`: Specifies the image that will trigger the popup when clicked.
 
-- `data-zoom-trigger`: Element that opens the popup.
-- `data-zoom-overlay`: Container of the popup.
-- `data-zoom-close`: Element that closes the popup.
-- `data-zoom-image`: Image that can be zoomed.
-- `data-zoom-min`: Minimum zoom level (default: 1).
-- `data-zoom-max`: Maximum zoom level (default: 3).
+- `data-zoom-overlay`: Defines the overlay container that will be displayed.
 
-## 4. Customization Options
+- `data-zoom-image`: The image inside the popup that will have zoom functionality.
+
+#### Optional attributes:
+
+- `data-zoom-min`: (Optional) Minimum zoom level. Default value: 1.
+
+- `data-zoom-max`: (Optional) Maximum zoom level. Default value: 3.
+
+#### Full Example
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zoomable</title>
+    <script defer src="./zoomable.js"></script>
+  </head>
+
+  <body>
+    <div class="zoomable-basic-image-container">
+      <img src="" alt="example" class="zoomable-basic-image" data-zoom-trigger />
+    </div>
+    <div class="zoomable-popup-overlay" data-zoom-overlay data-zoom-close>
+      <div class="zoomable-popup-container">
+        <div class="zoomable-popup-content">
+          <img src="" alt="Zoomed image" class="zoomable-popup-image" data-zoom-image data-zoom-min="1" data-zoom-max="3" />
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+```
+
+## 4. Configuration Options in JS
 
 When initializing the library, you can pass the following options:
 
-| Option               | Type   | Default                   | Description                                     |
-| -------------------- | ------ | ------------------------- | ----------------------------------------------- |
-| `overlaySelector`    | string | `.zoomable-popup-overlay` | Selector for the popup overlay element.         |
-| `popupImageSelector` | string | `.zoomable-popup-image`   | Selector for the image displayed in the popup.  |
-| `triggerSelector`    | string | `[data-zoomable]`         | Selector for the images that trigger the popup. |
-| `zoomLimit`          | number | `3`                       | Maximum zoom level for the popup image.         |
+| Option               | Type   | Default                   | Description                                                                            |
+| -------------------- | ------ | ------------------------- | -------------------------------------------------------------------------------------- |
+| `overlaySelector`    | string | `.zoomable-popup-overlay` | Selector for the popup overlay element.                                                |
+| `popupImageSelector` | string | `.zoomable-popup-image`   | Selector for the image displayed in the popup.                                         |
+| `triggerSelector`    | string | `[data-zoom-trigger]`     | Selector for the images that trigger the popup.                                        |
+| `zoomLimits`         | object | `{ min: 1, max: 3 }`      | Object specifying the minimum (data-zoom-min) and maximum (data-zoom-max) zoom levels. |
+| `zoomLevel`          | number | `1`                       | Current zoom level, initialized to 1.                                                  |
 
-## 5. Classes and Styling
+## 5. Configuration Options in CSS
 
 The library uses a set of pre-defined classes for styling. You can customize these classes in your CSS or overwrite them as needed. Below is a guide to each class and its purpose:
 
@@ -92,7 +135,7 @@ Here are the default styles applied by the library. These can be customized in y
   cursor: pointer;
 }
 
-/* Pop Up */
+/* Modal */
 .zoomable-popup-overlay {
   position: fixed;
   top: 0;
@@ -146,7 +189,7 @@ You can overwrite the default styles by adding your own CSS rules. For example:
 
 ## 6. Contributing
 
-Contributions are welcome! Feel free to open issues or submit pull requests.
+Contributions are welcome! If you find any bugs or want to suggest improvements, feel free to open an issue or submit a pull request.
 
 ## 7. Credits
 
