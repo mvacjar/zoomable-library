@@ -94,7 +94,7 @@ class Zoomable {
         });
 
         // this.popupImage.addEventListener('wheel', (event) => this.handleZoom(event));
-
+        // Touchpad and mouse controls
         this.popupImage.addEventListener('wheel', (event) => {
             const isTouchpad = Math.abs(event.deltaY) < 50;
 
@@ -103,6 +103,19 @@ class Zoomable {
             } else if (event.metaKey || event.ctrlKey) {
                 event.preventDefault();
                 this.handleZoom(event);
+            }
+        });
+
+        // Key controls
+        document.addEventListener('keydown', (event) => {
+            if (event.metaKey || event.ctrlKey) {
+                if (event.key === '+' || event.key === '=') {
+                    event.preventDefault();
+                    this.handleZoom({ delta: -100 });
+                } else if (event.key === '-') {
+                    event.preventDefault();
+                    this.handleZoom({ delta: 100 });
+                }
             }
         });
 
@@ -122,18 +135,8 @@ class Zoomable {
         //     }
         // });
 
-        document.addEventListener('keydown', (event) => {
-            if (event.metaKey || event.ctrlKey) {
-                if (event.key === '+' || event.key === '=') {
-                    event.preventDefault();
-                    this.handleZoom({ delta: -100 });
-                } else if (event.key === '-') {
-                    event.preventDefault();
-                    this.handleZoom({ delta: 100 });
-                }
-            }
-        });
-        
+        // Phone controls
+
     }
 
     openPopup() {
@@ -165,7 +168,6 @@ class Zoomable {
         this.zoomLevel = Math.min(Math.max(this.zoomLevel + delta, this.zoomLimits.min), this.zoomLimits.max);
         this.popupImage.style.transform = `scale(${this.zoomLevel})`;
     }
-
 
 }
 
