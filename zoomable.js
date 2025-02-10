@@ -97,7 +97,7 @@ class Zoomable {
         if (this.triggerElement && this.overlayElement && this.popupImage) {
             this.init();
         } else {
-            console.error('ZoomablePopup: Required elements with data-* attributes not found.');
+            console.error('Zoomable: Required elements with data-* attributes not found.');
         }
     }
 
@@ -111,7 +111,47 @@ class Zoomable {
             if (event.target === this.overlayElement) this.closePopup();
         });
 
-        this.popupImage.addEventListener('wheel', (event) => this.handleZoom(event));
+        // this.popupImage.addEventListener('wheel', (event) => this.handleZoom(event));
+
+        this.popupImage.addEventListener('wheel', (event) => {
+            const isTouchpad = Math.abs(event.deltaY) < 50;
+
+            if (isTouchpad) {
+                this.handleZoom(event);
+            } else if (event.metaKey || event.ctrlKey) {
+                event.preventDefault();
+                this.handleZoom(event);
+            }
+        });
+
+        // document.addEventListener('keydown', (event) => {
+        //     if (event.metaKey || event.ctrlKey) {
+        //         switch(event.key) {
+        //             case '+':
+        //             case '=':
+        //                 event.preventDefault();
+        //                 this.handleZoom({ delta: -100 });
+        //                 break;
+        //             case '-':
+        //                 event.preventDefault();
+        //                 this.handleZoom({ delta: 100 });
+        //                 break;
+        //         }
+        //     }
+        // });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.metaKey || event.ctrlKey) {
+                if (event.key === '+' || event.key === '=') {
+                    event.preventDefault();
+                    this.handleZoom({ delta: -100 });
+                } else if (event.key === '-') {
+                    event.preventDefault();
+                    this.handleZoom({ delta: 100 });
+                }
+            }
+        });
+        
     }
 
     openPopup() {
@@ -123,13 +163,30 @@ class Zoomable {
         this.resetZoom();
     }
 
+    // handleZoom(event) {
+    //     event.preventDefault();
+    //     const delta = event.deltaY > 0 ? -0.05 : 0.05;
+    //     this.zoomLevel = Math.min(Math.max(this.zoomLevel + delta, this.zoomLimits.min), this.zoomLimits.max);
+    //     this.popupImage.style.transform = `scale(${this.zoomLevel})`;
+    // }   
+
     handleZoom(event) {
-        event.preventDefault();
-        const delta = event.deltaY > 0 ? -0.05 : 0.05;
+        if (event.preventDefault) event.preventDefault();
+
+        let delta;
+        if (typeof event.deltaY !== 'undefined') {
+            delta = event.deltaY > 0 ? -0.5 : 0.5;
+        } else {
+            delta = event.delta < 0 ? 0.5 : -0.5;
+        }
+
         this.zoomLevel = Math.min(Math.max(this.zoomLevel + delta, this.zoomLimits.min), this.zoomLimits.max);
         this.popupImage.style.transform = `scale(${this.zoomLevel})`;
-    }   
+    }
+
+
 }
+
 document.addEventListener('DOMContentLoaded', () => {
     new Zoomable();
 });
