@@ -1,88 +1,70 @@
 class Zoomable {
     constructor() {
-        if (!document.querySelector('#zoomable-popup-styles')) {
-    const styleTag = document.createElement('style');
-    styleTag.id = 'zoomable-popup-styles';
-    styleTag.textContent = `
-        /* Basic Image */
-        .zoomable-basic-image-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-        }
+    if (!document.querySelector('#zoomable-popup-styles')) {
+        const styleTag = document.createElement('style');
+        styleTag.id = 'zoomable-popup-styles';
+        styleTag.textContent = `
+            /* Basic Image */
+            .zoomable-basic-image-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100%;
+            }
 
-        .zoomable-basic-image {
-            max-width: 20%;
-            max-height: 20%;
-            border-radius: 10px;
-        }
+            .zoomable-basic-image {
+                max-width: 20%;
+                max-height: 20%;
+                border-radius: 10px;
+            }
 
-        /* Modal */
-        .zoomable-popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #00000078;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-        }
+            /* PopUp */
+            .zoomable-popup-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #00000078;
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 10;
+            }
 
-        .zoomable-popup-overlay.active {
-            display: flex;
-        }
+            .zoomable-popup-overlay.active {
+                display: flex;
+            }
 
-        .zoomable-popup-container {
-            position: relative;
-            margin: 0;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+            .zoomable-popup-container {
+                position: relative;
+                margin: 0;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
 
-        .zoomable-popup-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+            .zoomable-popup-content {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
 
-        .zoomable-popup-image {
-            border-radius: 10px;
-            max-width: 70%;
-            max-height: 70%;
-            cursor: default;
-            max-width: none;
-            max-height: none;
-            position: absolute;
-            transition: transform 0.5s ease-in-out; 
-        }
+            .zoomable-popup-image {
+                border-radius: 10px;
+                max-width: 70%;
+                max-height: 70%;
+                cursor: default;
+                max-width: none;
+                max-height: none;
+                position: absolute;
+                transition: transform 0.5s ease-in-out; 
+            }
+        `;
+        document.head.appendChild(styleTag);
+    }
 
-        .zoomable-close-zone {
-            color: transparent;
-            font-family: monospace;
-            width: 50%;
-            top: -30px;
-            left: 130px;
-            font-size: 20px;
-            position: absolute;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            z-index: 20;
-            display: none;
-        }
-
-        p {
-            color: white;
-        }
-    `;
-    document.head.appendChild(styleTag);
-}
         this.triggerElement = document.querySelector('[data-zoom-trigger]');
         this.overlayElement = document.querySelector('[data-zoom-overlay]');
         this.closeElement = document.querySelector('[data-zoom-close]');
