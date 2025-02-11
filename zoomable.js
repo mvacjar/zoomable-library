@@ -109,7 +109,7 @@ class Zoomable {
         // Key controls
         document.addEventListener('keydown', (event) => {
             if (event.metaKey || event.ctrlKey) {
-                if (event.key === '+' || event.key === '=') {
+                if (event.key === '+') {
                     event.preventDefault();
                     this.handleZoom({ delta: -100 });
                 } else if (event.key === '-') {
@@ -118,22 +118,6 @@ class Zoomable {
                 }
             }
         });
-
-        // document.addEventListener('keydown', (event) => {
-        //     if (event.metaKey || event.ctrlKey) {
-        //         switch(event.key) {
-        //             case '+':
-        //             case '=':
-        //                 event.preventDefault();
-        //                 this.handleZoom({ delta: -100 });
-        //                 break;
-        //             case '-':
-        //                 event.preventDefault();
-        //                 this.handleZoom({ delta: 100 });
-        //                 break;
-        //         }
-        //     }
-        // });
 
         // Phone controls
 
