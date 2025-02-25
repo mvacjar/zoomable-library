@@ -1,79 +1,104 @@
 class Zoomable {
     constructor() {
-    if (!document.querySelector('#zoomable-popup-styles')) {
-        const styleTag = document.createElement('style');
-        styleTag.id = 'zoomable-popup-styles';
-        styleTag.textContent = `
-            /* Basic Image */
-            .zoomable-basic-image-container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100%;
-            }
+        if (!document.querySelector('#zoomable-popup-styles')) {
+            const styleTag = document.createElement('style');
+            styleTag.id = 'zoomable-popup-styles';
+            styleTag.textContent = `
+                /* Basic Image */
+                .zoomable-basic-image-container {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100%;
+                }
 
-            .zoomable-basic-image {
-                max-width: 20%;
-                max-height: 20%;
-                border-radius: 10px;
-            }
+                .zoomable-basic-image {
+                    max-width: 50%;
+                    max-height: 50%;
+                    border-radius: 10px;
+                }
 
-            /* PopUp */
-            .zoomable-popup-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: #00000078;
-                display: none;
-                justify-content: center;
-                align-items: center;
-                z-index: 10;
-            }
+                /* PopUp */
+                .zoomable-popup-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: #00000078;
+                    display: none;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10;
+                }
 
-            .zoomable-popup-overlay.active {
-                display: flex;
-            }
+                .zoomable-popup-overlay.active {
+                    display: flex;
+                }
 
-            .zoomable-popup-container {
-                position: relative;
-                margin: 0;
-                width: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
+                .zoomable-popup-container {
+                    position: relative;
+                    margin: 0;
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
 
-            .zoomable-popup-content {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
+                .close-button-container {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    z-index: 20;
+                }
 
-            .zoomable-popup-image {
-                border-radius: 10px;
-                max-width: 70%;
-                max-height: 70%;
-                cursor: default;
-                max-width: none;
-                max-height: none;
-                position: absolute;
-                transition: transform 0.5s ease-in-out; 
-            }
-        `;
-        document.head.appendChild(styleTag);
-    }
+                .close-button {
+                    background: #fff;
+                    border: none;
+                    border-radius: 50%;
+                    width: 25px;
+                    height: 25px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    font-size: 15px;
+                    line-height: 20px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.26);
+                }
+
+                .zoomable-popup-content {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .zoomable-popup-image {
+                    border-radius: 10px;
+                    max-width: 70%;
+                    max-height: 70%;
+                    cursor: default;
+                    max-width: none;
+                    max-height: none;
+                    position: absolute;
+                    transition: transform 0.5s ease-in-out; 
+                }
+            `;
+            document.head.appendChild(styleTag);
+        }
 
         this.triggerElement = document.querySelector('[data-zoom-trigger]');
         this.overlayElement = document.querySelector('[data-zoom-overlay]');
-        this.closeElement = document.querySelector('[data-zoom-close]');
         this.popupImage = document.querySelector('[data-zoom-image]');
+        this.closeButton = document.querySelector('.close-button');
 
         const zoomMin = this.popupImage?.dataset.zoomMin || 1;
         const zoomMax = this.popupImage?.dataset.zoomMax || 6;
 
-        this.zoomLevel = 1;
+        this.zoomLevelsKeyboard = [1, 2, 3, 4, 5, 6];
+        this.zoomLevelsTouchpad = [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6];
+        this.zoomIndexKeyboard = 0;
+        this.zoomIndexTouchpad = 0;
         this.zoomLimits = { min: parseFloat(zoomMin), max: parseFloat(zoomMax) };
 
         if (this.triggerElement && this.overlayElement && this.popupImage) {
@@ -86,50 +111,86 @@ class Zoomable {
     init() {
         this.triggerElement.addEventListener('click', () => this.openPopup());
 
-        if (this.closeElement) {
-            this.closeElement.addEventListener('click', () => this.closePopup());
+        if (this.closeButton) {
+            this.closeButton.addEventListener('click', () => this.closePopup());
         }
-        this.overlayElement.addEventListener('click', (event) => {
-            if (event.target === this.overlayElement) this.closePopup();
-        });
 
-        // Touchpad and mouse controls
-        this.popupImage.addEventListener('wheel', (event) => {
-
+        this.overlayElement.addEventListener('wheel', (event) => {
             if (event.ctrlKey) {
                 event.preventDefault();
-                this.handleZoom(event);
-            }
-
-            if (event.metaKey || event.ctrlKey) {
-                event.preventDefault();
-                this.handleZoom(event);
+                this.handleTouchpadZoom(event);
             }
         });
 
-        // Keyboard controls
-        document.addEventListener('keydown', (event) => {
-            if (event.metaKey || event.ctrlKey) {
-                if (event.key === '+') {
-                    event.preventDefault();
-                    this.handleZoom({ delta: -100 });
-                } else if (event.key === '-') {
-                    event.preventDefault();
-                    this.handleZoom({ delta: 100 });
+        document.addEventListener('keydown', (event) => this.handleKeyboardZoom(event));
+        this.overlayElement.addEventListener('touchstart', (event) => this.handleTouchStart(event), { passive: false });
+        this.overlayElement.addEventListener('touchmove', (event) => this.handleTouchMove(event), { passive: false });
+    }
+
+    handleKeyboardZoom(event) {
+        if (event.metaKey || event.ctrlKey) {
+            if (event.key === '+') {
+                event.preventDefault();
+                this.changeZoom(1, 'keyboard');
+            } else if (event.key === '-') {
+                event.preventDefault();
+                this.changeZoom(-1, 'keyboard');
+            }
+        }
+    }
+
+    handleTouchpadZoom(event) {
+        if (event.ctrlKey) {
+            event.preventDefault();
+            const direction = event.deltaY > 0 ? -1 : 1;
+            this.changeZoom(direction, 'touchpad');
+        }
+    }
+
+    handleTouchStart(event) {
+        if (event.touches.length === 2) {
+            this.initialPinchDistance = this.getPinchDistance(event.touches);
+        }
+    }
+
+    handleTouchMove(event) {
+        if (event.touches.length === 2) {
+            event.preventDefault();
+            const newDistance = this.getPinchDistance(event.touches);
+            if (this.initialPinchDistance) {
+                const scaleFactor = newDistance / this.initialPinchDistance;
+                if (scaleFactor > 1.1) { 
+                    this.changeZoom(0.1, 'touchpad');
+                    this.initialPinchDistance = newDistance;
+                } else if (scaleFactor < 0.9) {
+                    this.changeZoom(-0.1, 'touchpad');
+                    this.initialPinchDistance = newDistance;
                 }
             }
-        });
+        }
+    }
 
-        // Phone controls
+    getPinchDistance(touches) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
 
-        // Drag image if it is bigger than the screen
-        this.popupImage.addEventListener('mousedown', (event) => this.handleDragStart(event));
-        this.popupImage.addEventListener('mousemove', (event) => this.handleDragMove(event));
-        this.popupImage.addEventListener('mouseup', () => this.handleDragEnd());
-        this.popupImage.addEventListener('mouseleave', () => this.handleDragEnd());
-        this.popupImage.addEventListener('click', (event) => {
-            event.stopPropagation();
-        });
+    changeZoom(direction, inputType) {
+        let newIndex;
+        if (inputType === 'keyboard') {
+            newIndex = this.zoomIndexKeyboard + direction;
+            if (newIndex >= 0 && newIndex < this.zoomLevelsKeyboard.length) {
+                this.zoomIndexKeyboard = newIndex;
+                this.popupImage.style.transform = `scale(${this.zoomLevelsKeyboard[this.zoomIndexKeyboard]})`;
+            }
+        } else if (inputType === 'touchpad') {
+            newIndex = this.zoomIndexTouchpad + direction;
+            if (newIndex >= 0 && newIndex < this.zoomLevelsTouchpad.length) {
+                this.zoomIndexTouchpad = newIndex;
+                this.popupImage.style.transform = `scale(${this.zoomLevelsTouchpad[this.zoomIndexTouchpad]})`;
+            }
+        }
     }
 
     openPopup() {
@@ -141,51 +202,10 @@ class Zoomable {
         this.resetZoom();
     }
 
-    handleZoom(event) {
-        if (event.preventDefault) event.preventDefault();
-
-        const step = event.ctrlKey ? 0.1 : 2;
-        let delta;
-
-        if (typeof event.deltaY !== 'undefined') {
-            delta = event.deltaY > 0 ? -step : step;
-        } else {
-            delta = event.delta < 0 ? step : -step;
-        }
-
-        this.zoomLevel = Math.min(Math.max(this.zoomLevel + delta, this.zoomLimits.min), this.zoomLimits.max);
-        this.popupImage.style.transform = `scale(${this.zoomLevel})`;
-    }
-
-    handleDragStart(event) {
-        event.preventDefault();
-        if (this.zoomLevel === 1) return; 
-
-        this.isDragging = true;
-        this.startX = event.clientX;
-        this.startY = event.clientY;
-
-        this.imgX = parseFloat(this.popupImage.dataset.x) || 0;
-        this.imgY = parseFloat(this.popupImage.dataset.y) || 0;
-    }
-
-    handleDragMove(event) {
-        if (!this.isDragging) return;
-
-        const currentX = event.clientX;
-        const currentY = event.clientY;
-
-        const deltaX = currentX - this.startX;
-        const deltaY = currentY - this.startY;
-
-        this.popupImage.dataset.x = this.imgX + deltaX;
-        this.popupImage.dataset.y = this.imgY + deltaY;
-
-        this.popupImage.style.transform = `translate(${this.popupImage.dataset.x}px, ${this.popupImage.dataset.y}px) scale(${this.zoomLevel})`;
-    }
-
-    handleDragEnd() {
-        this.isDragging = false;
+    resetZoom() {
+        this.zoomIndexKeyboard = 0;
+        this.zoomIndexTouchpad = 0;
+        this.popupImage.style.transform = `scale(${this.zoomLevelsKeyboard[0]})`;
     }
 }
 
