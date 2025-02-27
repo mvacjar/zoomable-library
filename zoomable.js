@@ -81,7 +81,6 @@ class Zoomable {
                     max-width: none;
                     max-height: none;
                     position: absolute;
-                    transition: transform 0.5s ease-in-out; 
                 }
             `;
             document.head.appendChild(styleTag);
@@ -90,6 +89,7 @@ class Zoomable {
         this.triggerElement = document.querySelector('[data-zoom-trigger]');
         this.overlayElement = document.querySelector('[data-zoom-overlay]');
         this.popupImage = document.querySelector('[data-zoom-image]');
+        this.closeElement = document.querySelector('[data-zoom-close]');
         this.closeButton = document.querySelector('.close-button');
 
         const zoomMin = this.popupImage?.dataset.zoomMin || 1;
@@ -115,6 +115,14 @@ class Zoomable {
             this.closeButton.addEventListener('click', () => this.closePopup());
         }
 
+         if (this.closeElement) {
+            this.closeElement.addEventListener('click', () => this.closePopup());
+        }
+        this.overlayElement.addEventListener('click', (event) => {
+            if (event.target === this.overlayElement) this.closePopup();
+        });
+        
+
         this.overlayElement.addEventListener('wheel', (event) => {
             if (event.ctrlKey) {
                 event.preventDefault();
@@ -124,28 +132,29 @@ class Zoomable {
 
         document.addEventListener('keydown', (event) => this.handleKeyboardZoom(event));
         this.overlayElement.addEventListener('touchstart', (event) => this.handleTouchStart(event), { passive: false });
-        this.overlayElement.addEventListener('touchmove', (event) => this.handleTouchMove(event), { passive: false });
+        this.overlayElement.addEventListener('touchmove', (event) => this.handleTouchMove(event), { passive: false });  
     }
 
     handleKeyboardZoom(event) {
         if (event.metaKey || event.ctrlKey) {
             if (event.key === '+') {
                 event.preventDefault();
-                this.changeZoom(1, 'keyboard');
+                this.handleZoom(1, 'keyboard');
             } else if (event.key === '-') {
                 event.preventDefault();
-                this.changeZoom(-1, 'keyboard');
+                this.handleZoom(-1, 'keyboard');
             }
         }
     }
 
     handleTouchpadZoom(event) {
-        if (event.ctrlKey) {
-            event.preventDefault();
-            const direction = event.deltaY > 0 ? -1 : 1;
-            this.changeZoom(direction, 'touchpad');
-        }
+    if (event.ctrlKey) {
+        event.preventDefault();
+        const direction = event.deltaY > 0 ? -1 : 1;
+        this.handleZoom(direction, 'touchpad');
     }
+}
+
 
     handleTouchStart(event) {
         if (event.touches.length === 2) {
@@ -160,10 +169,10 @@ class Zoomable {
             if (this.initialPinchDistance) {
                 const scaleFactor = newDistance / this.initialPinchDistance;
                 if (scaleFactor > 1.1) { 
-                    this.changeZoom(0.1, 'touchpad');
+                    this.handleZoom(0.1, 'touchpad');
                     this.initialPinchDistance = newDistance;
                 } else if (scaleFactor < 0.9) {
-                    this.changeZoom(-0.1, 'touchpad');
+                    this.handleZoom(-0.1, 'touchpad');
                     this.initialPinchDistance = newDistance;
                 }
             }
@@ -176,7 +185,7 @@ class Zoomable {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    changeZoom(direction, inputType) {
+    handleZoom(direction, inputType) {
         let newIndex;
         if (inputType === 'keyboard') {
             newIndex = this.zoomIndexKeyboard + direction;
@@ -192,6 +201,7 @@ class Zoomable {
             }
         }
     }
+    
 
     openPopup() {
         this.overlayElement.classList.add('active');
@@ -212,3 +222,10 @@ class Zoomable {
 document.addEventListener('DOMContentLoaded', () => {
     new Zoomable();
 });
+
+
+
+
+
+
+
