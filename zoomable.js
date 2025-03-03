@@ -18,6 +18,38 @@ class Zoomable {
                     border-radius: 10px;
                 }
 
+                /* Zoom Controls*/
+
+                .zoomable-controls {
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 0, 0, 0.6);
+                    padding: 10px;
+                    border-radius: calc(0.5* 50px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 100;
+                    height: 25px;
+                }
+
+                .zoomable-controls button {
+                    background: #fff;
+                    border: none;
+                    padding: 10px;
+                    margin: 0 10px;
+                    cursor: pointer;
+                    font-size: 20px;
+                    border-radius: 50%; 
+                    width: 30px; 
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
                 /* PopUp */
                 .zoomable-popup-overlay {
                     position: fixed;
@@ -100,6 +132,9 @@ class Zoomable {
         this.closeElement = document.querySelector('[data-zoom-close]');
         this.closeButton = document.querySelector('.close-button');
 
+        this.zoomInButton = document.querySelector('.zoom-in');
+        this.zoomOutButton = document.querySelector('.zoom-out');
+
         const zoomMin = this.popupImage?.dataset.zoomMin || 1;
         const zoomMax = this.popupImage?.dataset.zoomMax || 6;
 
@@ -118,8 +153,9 @@ class Zoomable {
         this.currentTranslateX = 0;
         this.currentTranslateY = 0;
 
-        // Variable para rastrear el estado de zoom al 75%
         this.isZoomedTo75 = false;
+        // Variable para rastrear qué método de zoom se está usando
+        this.activeZoomMethod = 'keyboard';
 
         if (this.triggerElement && this.overlayElement && this.popupImage) {
             this.init();
@@ -130,10 +166,14 @@ class Zoomable {
         this.triggerElement.addEventListener('click', () => this.openPopup());
 
         this.overlayElement.addEventListener('click', (event) => {
-            if (!event.target.matches('[data-zoom-image]')) {
+            if (event.target === this.overlayElement) {
                 this.closePopup();
             }
         });
+
+        if (this.closeButton) {
+            this.closeButton.addEventListener('click', () => this.closePopup());
+        }
         
         this.overlayElement.addEventListener('wheel', (event) => {
             if (event.ctrlKey) {
@@ -142,22 +182,28 @@ class Zoomable {
             }
         });
 
+        if (this.zoomInButton) {
+            this.zoomInButton.addEventListener('click', () => this.handleZoom(1, 'manual'));
+        }
+        if (this.zoomOutButton) {
+            this.zoomOutButton.addEventListener('click', () => this.handleZoom(-1, 'manual'));
+        }
+
+
         document.addEventListener('keydown', (event) => this.handleKeyboardZoom(event));
         this.overlayElement.addEventListener('touchstart', (event) => this.handleTouchStart(event), { passive: false });
         this.overlayElement.addEventListener('touchmove', (event) => this.handleTouchMove(event), { passive: false });  
 
-        // Eventos para el arrastre de la imagen
         this.popupImage.addEventListener('mousedown', (event) => this.handleDragStart(event));
-        window.addEventListener('mousemove', (event) => this.handleDragMove(event));
+        window.addEventListener('mousemove', (event) => this.handleDragMode(event));
         window.addEventListener('mouseup', () => this.handleDragEnd());
 
-        // Eventos de arrastre para dispositivos tactiles
-        this.popupImage.addEventListener('touchstart', (event) => this.handleDragTouchStart(event), { passive: false });
-        window.addEventListener('touchmove', (event) => this.handleDragTouchMove(event), { passive: false });
+        this.popupImage.addEventListener('touchstart', (event) => this.startDragTouch(event), { passive: false });
+        window.addEventListener('touchmove', (event) => this.handleDragTouch(event), { passive: false });
         window.addEventListener('touchend', () => this.handleDragEnd());
         
-        // Evento para doble click que activa el zoom al 75%
         this.popupImage.addEventListener('dblclick', (event) => this.handleDoubleClick(event));
+        this.updateZoomPercentage();
     }
 
     handleDragStart(event) {
@@ -174,7 +220,7 @@ class Zoomable {
         }
     }
 
-    handleDragMove(event) {
+    handleDragMode(event) {
         if (this.isDragging) {
             const x = event.clientX - this.startX;
             const y = event.clientY - this.startY;
@@ -184,6 +230,7 @@ class Zoomable {
             this.currentTranslateY = this.translateY + y;
             
             // Aplicar la transformación
+            this.applyBoundaries();
             this.updateImageTransform();
         }
     }
@@ -195,39 +242,28 @@ class Zoomable {
         }
     }
 
-    handleDragTouchStart(event) {
-        if (event.touches.length === 2) {
-            // Iniciar el arrastre con dos dedos
+    startDragTouch(event) {
+        if (event.touches.length === 1 && this.getCurrentZoomLevel() > 1) {
             this.isDragging = true;
             this.popupImage.classList.add('dragging');
-            this.startX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
-            this.startY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+            this.startX = event.touches[0].clientX;
+            this.startY = event.touches[0].clientY;
             this.translateX = this.currentTranslateX;
             this.translateY = this.currentTranslateY;
             event.preventDefault();
         }
     }
 
-    handleDragTouchMove(event) {
-        if (this.isDragging && event.touches.length === 2) {
-            const currentX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
-            const currentY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
-
-            // Cálculo de la diferencia entre la posición anterior y la nueva
-            const dx = currentX - this.startX;
-            const dy = currentY - this.startY;
-
-            // Actualizamos las posiciones actuales de la imagen
-            this.currentTranslateX = this.translateX + dx;
-            this.currentTranslateY = this.translateY + dy;
-
-            // Aplicar la transformación
+    handleDragTouch(event) {
+        if (this.isDragging && event.touches.length === 1) {
+            const x = event.touches[0].clientX - this.startX;
+            const y = event.touches[0].clientY - this.startY;
+            
+            this.currentTranslateX = this.translateX + x;
+            this.currentTranslateY = this.translateY + y;
+            
+            this.applyBoundaries();
             this.updateImageTransform();
-
-            // Actualizar las coordenadas iniciales para el siguiente movimiento
-            this.startX = currentX;
-            this.startY = currentY;
-
             event.preventDefault();
         }
     }
@@ -281,7 +317,26 @@ class Zoomable {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
+    syncZoomIndices() {
+        const currentZoom = this.getCurrentZoomLevel();
+        
+        let nearestKeyboardIndex = 0;
+        let minDifference = Math.abs(this.zoomLevelsKeyboard[0] - currentZoom);
+        
+        for (let i = 1; i < this.zoomLevelsKeyboard.length; i++) {
+            const diff = Math.abs(this.zoomLevelsKeyboard[i] - currentZoom);
+            if (diff < minDifference) {
+                minDifference = diff;
+                nearestKeyboardIndex = i;
+            }
+        }
+        
+        this.zoomIndexKeyboard = nearestKeyboardIndex;
+    }
+
     handleZoom(direction, inputType) {
+        this.activeZoomMethod = inputType;
+        
         let newIndex;
         let currentZoom = this.getCurrentZoomLevel();
         let newZoom;
@@ -292,7 +347,8 @@ class Zoomable {
                 this.zoomIndexKeyboard = newIndex;
                 newZoom = this.zoomLevelsKeyboard[this.zoomIndexKeyboard];
                 
-                // Si estamos haciendo zoom out, ajustamos la posición
+                this.zoomIndexTouchpad = 0;
+                
                 if (direction < 0) {
                     this.adjustPositionOnZoomOut(currentZoom, newZoom);
                 }
@@ -301,50 +357,82 @@ class Zoomable {
             }
         } else if (inputType === 'touchpad') {
             newIndex = this.zoomIndexTouchpad + direction;
+
             if (newIndex >= 0 && newIndex < this.zoomLevelsTouchpad.length) {
                 this.zoomIndexTouchpad = newIndex;
                 newZoom = this.zoomLevelsTouchpad[this.zoomIndexTouchpad];
+                 this.syncZoomIndices();
                 
-                // Si estamos haciendo zoom out, ajustamos la posición
                 if (direction < 0) {
                     this.adjustPositionOnZoomOut(currentZoom, newZoom);
                 }
                 
                 this.updateImageTransform();
             }
+        } else if (inputType === 'manual') {
+            this.syncZoomIndices();
+            
+            if (direction > 0) {
+                if (this.zoomIndexKeyboard < this.zoomLevelsKeyboard.length - 1) {
+                    this.zoomIndexKeyboard += 1;
+                    newZoom = this.zoomLevelsKeyboard[this.zoomIndexKeyboard];
+
+                    this.zoomIndexTouchpad = 0;
+                    
+                    this.updateImageTransform();
+                }
+            } else {
+                if (this.zoomIndexKeyboard > 0) {
+                    currentZoom = this.getCurrentZoomLevel();
+                    this.zoomIndexKeyboard -= 1;
+                    newZoom = this.zoomLevelsKeyboard[this.zoomIndexKeyboard];
+                    
+                    this.zoomIndexTouchpad = 0;
+                    
+                    this.adjustPositionOnZoomOut(currentZoom, newZoom);
+                    this.updateImageTransform();
+                }
+            }
         }
+        this.updateZoomPercentage();
+    }
+
+    updateZoomPercentage() {
+        if (!this.zoomPercentageDisplay) return;
+        
+        const currentZoom = this.getCurrentZoomLevel();
+        const maxZoom = this.zoomLimits.max;
+        const percentage = Math.round((currentZoom / maxZoom) * 100);
+        this.zoomPercentageDisplay.textContent = `${percentage}%`;
+    }
+
+    getCurrentZoomLevel() {
+        return this.zoomIndexTouchpad > 0 
+            ? this.zoomLevelsTouchpad[this.zoomIndexTouchpad] 
+            : this.zoomLevelsKeyboard[this.zoomIndexKeyboard];
     }
     
     adjustPositionOnZoomOut(currentZoom, newZoom) {
-        // Calcular el factor de reducción de zoom
         const zoomRatio = newZoom / currentZoom;
         
-        // Ajustar las coordenadas de traslación proporcionalmente al cambio de zoom
         this.currentTranslateX = this.currentTranslateX * zoomRatio;
         this.currentTranslateY = this.currentTranslateY * zoomRatio;
         
-        // Si el zoom es 1 (o muy cercano), resetear completamente la posición
         if (newZoom <= 1.05) {
             this.currentTranslateX = 0;
             this.currentTranslateY = 0;
         }
     }
     
-    getCurrentZoomLevel() {
-        // Obtenemos el nivel actual de zoom según el último usado
-        return this.zoomIndexTouchpad > 0 
-            ? this.zoomLevelsTouchpad[this.zoomIndexTouchpad] 
-            : this.zoomLevelsKeyboard[this.zoomIndexKeyboard];
-    }
-    
     updateImageTransform() {
-        // Aplicamos tanto el zoom como la traslación
         const zoomLevel = this.getCurrentZoomLevel();
         this.popupImage.style.transform = `scale(${zoomLevel}) translate(${this.currentTranslateX / zoomLevel}px, ${this.currentTranslateY / zoomLevel}px)`;
     }
     
     openPopup() {
         this.overlayElement.classList.add('active');
+            this.resetZoom();
+     
     }
 
     closePopup() {
@@ -359,71 +447,75 @@ class Zoomable {
         this.currentTranslateY = 0;
         this.popupImage.style.transform = 'scale(1)';
         this.isZoomedTo75 = false;
+        this.updateZoomPercentage();
     }
     
-    // Nueva función para manejar el doble clic y zoom al 75% centrado en el punto de clic
     handleDoubleClick(event) {
         event.preventDefault();
         
         if (this.isZoomedTo75) {
-            // Si ya está ampliado al 75%, restablecer al tamaño original
             this.resetZoom();
         } else {
-            // Calcular el nivel de zoom al 75% del máximo disponible
             const maxZoom = this.zoomLimits.max;
             const targetZoom = maxZoom * 0.75;
             
-            // Encontrar qué índice corresponde al zoom objetivo en nuestras matrices de zoom
-            // Primero intentamos encontrarlo en los niveles de teclado (que son más discretos)
             let targetIndex = this.zoomLevelsKeyboard.findIndex(level => level >= targetZoom);
             let zoomArray = this.zoomLevelsKeyboard;
             let zoomIndexProp = 'zoomIndexKeyboard';
             
-            // Si no lo encontramos o si el zoom va a ser más preciso con los niveles de touchpad
             if (targetIndex === -1 || 
                 (this.zoomLevelsTouchpad.some(level => Math.abs(level - targetZoom) < Math.abs(this.zoomLevelsKeyboard[targetIndex] - targetZoom)))) {
                 targetIndex = this.zoomLevelsTouchpad.findIndex(level => level >= targetZoom);
                 zoomArray = this.zoomLevelsTouchpad;
                 zoomIndexProp = 'zoomIndexTouchpad';
                 
-                // Si aún no lo encontramos, tomamos el último nivel (el más alto)
                 if (targetIndex === -1) {
                     targetIndex = this.zoomLevelsTouchpad.length - 1;
                 }
             }
             
-            // Guardar el nivel de zoom actual para calcular el ratio de zoom
             const currentZoom = this.getCurrentZoomLevel();
             
-            // Actualizar el índice de zoom
             this[zoomIndexProp] = targetIndex;
             const newZoom = zoomArray[targetIndex];
             
-            // Calcular las coordenadas del punto de clic relativas a la imagen
+            if (zoomIndexProp === 'zoomIndexTouchpad') {
+                this.syncZoomIndices();
+            }
+            
             const rect = this.popupImage.getBoundingClientRect();
             
-            // Calcular el centro de la imagen
             const imageCenterX = rect.left + rect.width / 2;
             const imageCenterY = rect.top + rect.height / 2;
             
-            // Calcular la diferencia entre el punto de clic y el centro de la imagen
             const clickOffsetX = event.clientX - imageCenterX;
             const clickOffsetY = event.clientY - imageCenterY;
             
-            // Calcular el factor de escala entre el zoom actual y el nuevo zoom
             const zoomRatio = newZoom / currentZoom;
             
-            // Calcular la nueva posición de manera que el punto de clic esté centrado
-            // después del zoom
             this.currentTranslateX = -clickOffsetX * (zoomRatio - 1);
             this.currentTranslateY = -clickOffsetY * (zoomRatio - 1);
             
-            // Aplicar el zoom y la traslación
             this.updateImageTransform();
             
-            // Marcar que la imagen está ampliada al 75%
             this.isZoomedTo75 = true;
         }
+        
+        this.updateZoomPercentage();
+    }
+
+    applyBoundaries() {
+        const rect = this.popupImage.getBoundingClientRect();
+        const imageWidth = rect.width;
+        const imageHeight = rect.height;
+        const containerWidth = this.overlayElement.clientWidth;
+        const containerHeight = this.overlayElement.clientHeight;
+
+        const maxX = (imageWidth - containerWidth) / 2;
+        const maxY = (imageHeight - containerHeight) / 2;
+
+        this.currentTranslateX = Math.min(maxX, Math.max(-maxX, this.currentTranslateX));
+        this.currentTranslateY = Math.min(maxY, Math.max(-maxY, this.currentTranslateY));
     }
 }
 
