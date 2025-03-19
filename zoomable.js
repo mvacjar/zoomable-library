@@ -144,7 +144,6 @@ class Zoomable {
         this.zoomIndexTouchpad = 0;
         this.zoomLimits = { min: parseFloat(zoomMin), max: parseFloat(zoomMax) };
 
-        // Variables para el desplazamiento de la imagen
         this.isDragging = false;
         this.startX = 0;
         this.startY = 0;
@@ -225,11 +224,9 @@ class Zoomable {
             const x = event.clientX - this.startX;
             const y = event.clientY - this.startY;
             
-            // Cálculo de nuevas coordenadas
             this.currentTranslateX = this.translateX + x;
             this.currentTranslateY = this.translateY + y;
             
-            // Aplicar la transformación
             this.applyBoundaries();
             this.updateImageTransform();
         }
