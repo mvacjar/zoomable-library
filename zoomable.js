@@ -134,6 +134,7 @@ class Zoomable {
 
         this.zoomInButton = document.querySelector('.zoom-in');
         this.zoomOutButton = document.querySelector('.zoom-out');
+        this.zoomMenu = document.querySelector('.zoomable-controls');
 
         const zoomMin = this.popupImage?.dataset.zoomMin || 1;
         const zoomMax = this.popupImage?.dataset.zoomMax || 6;
@@ -153,7 +154,6 @@ class Zoomable {
         this.currentTranslateY = 0;
 
         this.isZoomedTo75 = false;
-        // Variable para rastrear qué método de zoom se está usando
         this.activeZoomMethod = 'keyboard';
 
         if (this.triggerElement && this.overlayElement && this.popupImage) {
@@ -165,14 +165,19 @@ class Zoomable {
         this.triggerElement.addEventListener('click', () => this.openPopup());
 
         this.overlayElement.addEventListener('click', (event) => {
-            if (event.target === this.overlayElement) {
+            const zoomMenuElement = this.zoomMenu || document.querySelector('.zoomable-controls');
+    
+            if (this.closeButton && this.closeButton.contains(event.target)) {
+                this.closePopup();
+                return;
+            }
+    
+            const isClickOutside = !this.popupImage.contains(event.target) && !zoomMenuElement.contains(event.target);
+    
+            if (isClickOutside) {
                 this.closePopup();
             }
         });
-
-        if (this.closeButton) {
-            this.closeButton.addEventListener('click', () => this.closePopup());
-        }
         
         this.overlayElement.addEventListener('wheel', (event) => {
             if (event.ctrlKey) {
