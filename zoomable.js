@@ -134,7 +134,7 @@ class Zoomable {
 
         this.zoomInButton = document.querySelector('.zoom-in');
         this.zoomOutButton = document.querySelector('.zoom-out');
-        this.zoomMenu = document.querySelector('.zoomable-controls');
+        this.zoomMenuElement = document.querySelector('.zoomable-controls');
 
         const zoomMin = this.popupImage?.dataset.zoomMin || 1;
         const zoomMax = this.popupImage?.dataset.zoomMax || 6;
@@ -165,14 +165,14 @@ class Zoomable {
         this.triggerElement.addEventListener('click', () => this.openPopup());
 
         this.overlayElement.addEventListener('click', (event) => {
-            const zoomMenuElement = this.zoomMenu || document.querySelector('.zoomable-controls');
+            const zoomMenu = this.zoomMenuElement;
     
             if (this.closeButton && this.closeButton.contains(event.target)) {
                 this.closePopup();
                 return;
             }
     
-            const isClickOutside = !this.popupImage.contains(event.target) && !zoomMenuElement.contains(event.target);
+            const isClickOutside = !this.popupImage.contains(event.target) && !zoomMenu.contains(event.target);
     
             if (isClickOutside) {
                 this.closePopup();
